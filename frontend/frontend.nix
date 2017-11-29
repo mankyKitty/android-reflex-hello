@@ -1,5 +1,5 @@
-{ mkDerivation, base, jsaddle-warp, reflex, reflex-dom
-, reflex-dom-core, stdenv
+{ mkDerivation, base, jsaddle, jsaddle-warp, lens, reflex
+, reflex-dom, reflex-dom-core, stdenv, text
 }:
 mkDerivation {
   pname = "frontend";
@@ -7,7 +7,9 @@ mkDerivation {
   src = ./.;
   isLibrary = true;
   isExecutable = true;
-  libraryHaskellDepends = [ base reflex reflex-dom ];
+  libraryHaskellDepends = [
+    base jsaddle lens reflex reflex-dom text
+  ];
   executableHaskellDepends = [
     base jsaddle-warp reflex-dom reflex-dom-core
   ];

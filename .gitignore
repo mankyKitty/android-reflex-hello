@@ -21,4 +21,5 @@ cabal.project.local
 .ghc.environment.*
 # Nix bits
 android-result
+ghcjs-frontend
 result
