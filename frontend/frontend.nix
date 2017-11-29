@@ -8,6 +8,8 @@ mkDerivation {
   isLibrary = true;
   isExecutable = true;
   libraryHaskellDepends = [ base reflex reflex-dom ];
-  executableHaskellDepends = [ base jsaddle-warp reflex-dom-core ];
+  executableHaskellDepends = [
+    base jsaddle-warp reflex-dom reflex-dom-core
+  ];
   license = stdenv.lib.licenses.unfree;
 }

@@ -1,3 +1,3 @@
 :set prompt "> "
 :set -isrc
-:load exe/Main
+:load exe/Dev
