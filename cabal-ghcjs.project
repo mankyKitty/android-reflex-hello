@@ -1,0 +1,4 @@
+-- cabal-ghcjs.project
+compiler: ghcjs
+packages:
+  frontend/
