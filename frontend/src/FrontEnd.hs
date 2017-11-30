@@ -20,7 +20,9 @@ frontendWidget = do
 
   RD.divClass "notification-test" $ do
     eNotify <- RD.button "Notify Meh"
-    eNotifyPerm <- RD.performEvent ( liftJSM tryNotify <$ eNotify )
+
+    eNotifyPerm <- RD.performEvent
+      $ liftJSM ( tryNotify "What up, Reflex") <$ eNotify
 
     RD.holdDyn Nothing eNotifyPerm
       >>= RD.display

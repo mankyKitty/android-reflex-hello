@@ -20,17 +20,15 @@ data NotifyPerm
   deriving Show
 
 tryNotify
-  :: JSM ( Maybe NotifyPerm )
-tryNotify = do
+  :: Text
+  -> JSM ( Maybe NotifyPerm )
+tryNotify msg = do
   let
-      msg :: Text
-      msg = pack "What up, Reflex?"
+    unpackJSString =
+      unpack . strToText
 
-      unpackJSString =
-        unpack . strToText
-
-      newNotify nObj =
-        JS.new nObj ( ValString msg )
+    newNotify nObj =
+      JS.new nObj ( ValString msg )
 
   notif <- JS.jsg "Notification"
   permS <- valToStr =<< notif ^. js "permission"
