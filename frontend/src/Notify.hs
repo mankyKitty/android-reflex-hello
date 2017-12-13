@@ -1,46 +1,57 @@
-module Notify (tryNotify) where
+{-# LANGUAGE LambdaCase #-}
+module Notify
+  ( NotifyPerm (..)
+  , tryNotify
+  ) where
+
+import           GHC.Generics                       (Generic)
 
 import           Control.Lens                       ((^.))
 import           Control.Monad                      (void, when)
 
-import           Data.Text                          (Text, pack, unpack)
+import           Data.Foldable                      (traverse_)
+import           Data.Maybe                         (fromMaybe)
+import           Data.Text                          (Text, unpack)
 
-import           Language.Javascript.JSaddle        (JSM)
-import           Language.Javascript.JSaddle.String (JSString, strToText)
-import           Language.Javascript.JSaddle.Value  (JSValue (ValString),
+import           Language.Javascript.JSaddle        (FromJSVal (..), JSM,
+                                                     strToText, toJSString,
                                                      valToStr)
+import           Language.Javascript.JSaddle.Value  (JSValue (ValString))
 
-import           Language.Javascript.JSaddle.Object (js, (!), ( # ))
-import qualified Language.Javascript.JSaddle.Object as JS
+import           Language.Javascript.JSaddle.Object (fun, js, js1, jsf, jsg,
+                                                     new, (!), ( # ))
 
 data NotifyPerm
-  = Def
+  = Default
   | Granted
   | Denied
-  deriving Show
+  deriving ( Eq, Show )
+
+instance FromJSVal NotifyPerm where
+  fromJSVal = fmap ( matchPermStr . unpack . strToText ) . valToStr
+    where
+      matchPermStr "default" = Just Default
+      matchPermStr "granted" = Just Granted
+      matchPermStr "denied"  = Just Denied
+      matchPermStr _         = Nothing
 
 tryNotify
   :: Text
   -> JSM ( Maybe NotifyPerm )
 tryNotify msg = do
   let
-    unpackJSString =
-      unpack . strToText
-
     newNotify nObj =
-      JS.new nObj ( ValString msg )
+      void $ new nObj ( ValString msg )
 
-  notif <- JS.jsg "Notification"
-  permS <- valToStr =<< notif ^. js "permission"
-  case unpackJSString permS of
-    "denied"  -> pure ( Just Denied )
-    "granted" -> newNotify notif >> pure ( Just Granted )
-    "default" -> do
-      _ <- notif ^. JS.jsf "requestPermission"
-        [JS.fun $ \_ _ [newPerm] -> do
-            np <- valToStr newPerm
-            when ( unpackJSString np == "granted" ) $
-              void ( newNotify notif )
-        ]
-      pure ( Just Def )
-    _ -> pure Nothing
+    notifyCB _    Denied  = pure ()
+    notifyCB nObj Granted = newNotify nObj
+    notifyCB nObj Default = void $ nObj ^. jsf "requestPermission"
+      [fun $ \_ _ [newPerm] ->
+          fromJSVal newPerm >>= traverse_ (\case Granted -> newNotify nObj
+                                                 _       -> pure ()
+                                          )
+      ]
+
+  notif <- jsg "Notification"
+  permS <- notif ^. js "permission"
+  fromJSVal permS >>= traverse (\p -> notifyCB notif p >> pure p)
