@@ -47,11 +47,9 @@ tryNotify msg = do
     notifyCB nObj Granted = newNotify nObj
     notifyCB nObj Default = void $ nObj ^. jsf "requestPermission"
       [fun $ \_ _ [newPerm] ->
-          fromJSVal newPerm >>= traverse_ (\case Granted -> newNotify nObj
-                                                 _       -> pure ()
-                                          )
+          fromJSVal newPerm >>= traverse_ (\p -> when (p == Granted) $ newNotify nObj )
       ]
 
   notif <- jsg "Notification"
   permS <- notif ^. js "permission"
-  fromJSVal permS >>= traverse (\p -> notifyCB notif p >> pure p)
+  fromJSVal permS >>= traverse (\p -> p <$ notifyCB notif p)
